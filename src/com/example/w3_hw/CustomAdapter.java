@@ -1,11 +1,14 @@
 package com.example.w3_hw;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -46,12 +49,13 @@ public class CustomAdapter extends ArrayAdapter<Article> implements OnItemClickL
 		
 		ImageView imageView = (ImageView) row.findViewById(R.id.custom_row_imageView1);
 		
-		try {
-			InputStream is = context.getAssets().open(articleData.get(position).getImgName());
-			Drawable d = Drawable.createFromStream(is, null);
-			imageView.setImageDrawable(d);
-		} catch (IOException e){
-			Log.e("ERROR", "ERROR:" + e);
+		String img_path = context.getFilesDir().getPath() + "/" + articleData.get(position).getImgName();
+		File img_load_path = new File(img_path);
+		
+		if (img_load_path.exists()) {
+			// 이미지가 경로에 있으면 이미지를 비트맵으로 바꾸어서 이미지 뷰에 표시
+			Bitmap bitmap = BitmapFactory.decodeFile(img_path);
+			imageView.setImageBitmap(bitmap);
 		}
 		
 		return row;

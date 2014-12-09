@@ -5,9 +5,8 @@ import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -22,6 +21,8 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
 	private Button mButtonRefresh;
 
 	private ArrayList<Article> articleList;
+	private ListView listView;
+	
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,21 +36,46 @@ public class MainActivity extends Activity implements OnClickListener, OnItemCli
         mButtonWrite.setOnClickListener(this);
         mButtonRefresh.setOnClickListener(this);
         
-		ListView listView = (ListView)findViewById(R.id.custom_list_listView);
+		listView = (ListView)findViewById(R.id.custom_list_listView);
 		
-		Dao dao = new Dao( getApplicationContext() );
-		String testJsonData = dao.getJsonTestData();
-		dao.insertJsonData(testJsonData);
-	
-		articleList = dao.getArticleList();
-		
-		CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_list_row, articleList);
-		listView.setAdapter(customAdapter);
-		listView.setOnItemClickListener(this);
-		
-		Log.i("test", "리스트뷰 완료");    
-      
+		refreshData();	
+		listView();
     }
+    
+    private void listView() {
+    	Dao dao = new Dao(getApplicationContext());
+    	articleList = dao.getArticleList();
+    	
+    	CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_list_row, articleList);
+    	listView.setAdapter(customAdapter);
+    	listView.setOnItemClickListener(this);
+    	
+    	Log.i("test", "리스트뷰 완료");        	
+    }
+    
+    private final Handler handler = new Handler();
+
+    private void refreshData() {
+    	new Thread() {
+	    	public void run() {
+				// 서버로부터 JSON 데이터를 가져옴
+				Proxy proxy = new Proxy();
+				String jsonData = proxy.getJSON();
+				
+				// DB에 JSON데이터를 저장		
+				Dao dao = new Dao(getApplicationContext());
+				dao.insertJsonData (jsonData);
+				
+				// listView();
+				handler.post(new Runnable() {
+					public void run() {
+						listView();
+					}
+				});
+	    	}
+    	}.start();
+    }
+    
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
     	Intent intent = new Intent(this, ViewActivity.class);
